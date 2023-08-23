@@ -2,7 +2,6 @@ package gioc
 
 import (
 	"fmt"
-	"sync"
 	"testing"
 )
 
@@ -17,16 +16,8 @@ func NewAppServiceProvider(c Container) ServiceProvider {
 }
 
 func (a *AppServiceProvider) Register() {
-	var s *Student
-	once := &sync.Once{}
 	a.c.Bind("student", func() any {
-		once.Do(func() {
-			s = &Student{
-				ID:   "1001",
-				Name: "Aim",
-			}
-		})
-		return s
+		return NewStudent()
 	})
 }
 
@@ -37,6 +28,13 @@ func (a *AppServiceProvider) Boot() {
 type Student struct {
 	ID   string
 	Name string
+}
+
+func NewStudent() *Student {
+	return &Student{
+		ID:   "1001",
+		Name: "Aim",
+	}
 }
 
 func TestNew(t *testing.T) {
@@ -53,4 +51,24 @@ func TestNew(t *testing.T) {
 	s2 := c.Make("student").(*Student)
 	fmt.Println(s2.ID)
 	fmt.Println(s2.Name)
+}
+
+func BenchmarkNew(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = &Student{
+			ID:   "1001",
+			Name: "Aim",
+		}
+	}
+}
+
+func BenchmarkIOC(b *testing.B) {
+	c := New()
+	c.AddServiceProvider(NewAppServiceProvider(c))
+	c.Boot()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_ = c.Make("student").(*Student)
+	}
 }
