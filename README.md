@@ -22,5 +22,5 @@ import "github.com/hugiot/gioc"
 
 ## License
 
-[MIT](https://choosealicense.com/licenses/mit/)
+[MIT](https://github.com/hugiot/gioc/blob/master/LICENSE)
 
