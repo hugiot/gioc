@@ -36,7 +36,7 @@ func main() {
 	container.AddServerProvider(&provider.AppServiceProvider{})
 	container.Boot()
 
-	// 简单绑定
+	// bind
 	o := container.Make(provider.OrderService).(*order.Order)
 	fmt.Println(o.ID, o.Product.Name, o.Product.Price)
 	o.Product.Name = "edit"
@@ -44,7 +44,7 @@ func main() {
 	o2 := container.Make(provider.OrderService).(*order.Order)
 	fmt.Println(o2.ID, o2.Product.Name, o2.Product.Price)
 
-	// 单例
+	// singleton
 	o3 := container.Make(provider.OrderSingleService).(*order.Order)
 	fmt.Println(o3.ID, o3.Product.Name, o3.Product.Price)
 	o3.Product.Name = "edit"
