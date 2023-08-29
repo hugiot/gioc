@@ -1,28 +1,3 @@
-# GIOC
-
-A go IOC container.
-
-
-## Authors
-
-- [@xiaocailc](https://github.com/xcocx)
-
-
-## Installation
-
-### Prerequisites
-
-- **[Go](https://go.dev/)** >= 1.20
-
-With [Go module](https://github.com/golang/go/wiki/Modules) support, simply add the following import
-
-```bash
-import "github.com/hugiot/gioc/src/container"
-```
-
-### Demo
-
-```go
 package main
 
 import (
@@ -52,9 +27,3 @@ func main() {
 	o4 := container.Make(provider.OrderSingleService).(*order.Order)
 	fmt.Println(o4.ID, o4.Product.Name, o4.Product.Price)
 }
-```
-
-## License
-
-[MIT](https://github.com/hugiot/gioc/blob/master/LICENSE)
-
