@@ -1,5 +1,7 @@
 package interfaces
 
+type ContainerCallback func(sc ServiceContainer) any
+
 type Container interface {
 	Get(id string) any
 	Has(id string) bool
@@ -7,8 +9,8 @@ type Container interface {
 
 type ServiceContainer interface {
 	Container
-	Bind(id string, callback func(sc ServiceContainer) any)
-	Single(id string, callback func(sc ServiceContainer) any)
+	Bind(id string, callback ContainerCallback)
+	Single(id string, callback ContainerCallback)
 	Instance(id string, instance any)
 	Make(id string) any
 }
