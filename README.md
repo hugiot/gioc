@@ -1,6 +1,6 @@
 # GIOC
 
-A go IOC container.
+A simple go IOC container.
 
 
 ## Authors
