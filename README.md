@@ -26,31 +26,25 @@ import "github.com/hugiot/gioc/src/container"
 package main
 
 import (
-	"fmt"
-	"github.com/hugiot/gioc/demo/order"
-	"github.com/hugiot/gioc/demo/provider"
+	"github.com/hugiot/gioc/examples/ioc/provider"
+	"github.com/hugiot/gioc/examples/ioc/service"
 	"github.com/hugiot/gioc/src/container"
+	"go.uber.org/zap"
 )
 
 func main() {
 	container.AddServerProvider(&provider.AppServiceProvider{})
 	container.Boot()
 
-	// bind
-	o := container.Make(provider.OrderService).(*order.Order)
-	fmt.Println(o.ID, o.Product.Name, o.Product.Price)
-	o.Product.Name = "edit"
+	logger := container.Make(service.Logger).(*zap.Logger)
+	defer func() {
+		_ = logger.Sync()
+	}()
 
-	o2 := container.Make(provider.OrderService).(*order.Order)
-	fmt.Println(o2.ID, o2.Product.Name, o2.Product.Price)
-
-	// singleton
-	o3 := container.Make(provider.OrderSingleService).(*order.Order)
-	fmt.Println(o3.ID, o3.Product.Name, o3.Product.Price)
-	o3.Product.Name = "edit"
-
-	o4 := container.Make(provider.OrderSingleService).(*order.Order)
-	fmt.Println(o4.ID, o4.Product.Name, o4.Product.Price)
+	logger.Debug("this is debug")
+	logger.Info("this is info")
+	logger.Warn("this is warn")
+	logger.Error("this is error")
 }
 ```
 

@@ -2,4 +2,8 @@
     name="gioc"
 
 [log]
-    level="warn"
+    # console、file
+    driver="console"
+    # only driver is file
+    file_name="app.log"
+    level="debug"
