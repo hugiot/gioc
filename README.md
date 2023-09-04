@@ -22,6 +22,10 @@ import "github.com/hugiot/gioc/src/container"
 
 ### Demo
 
+**NOTICE:** 
+
+All gioc examples have been moved as standalone repository to [here](https://github.com/hugiot/gioc-examples).
+
 ```go
 package main
 
