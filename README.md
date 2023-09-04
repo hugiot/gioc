@@ -17,7 +17,7 @@ A simple go IOC container.
 With [Go module](https://github.com/golang/go/wiki/Modules) support, simply add the following import
 
 ```bash
-import "github.com/hugiot/gioc/src/container"
+import "github.com/hugiot/gioc"
 ```
 
 ### Demo
