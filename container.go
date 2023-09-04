@@ -1,7 +1,6 @@
-package container
+package gioc
 
 import (
-	"github.com/hugiot/gioc/src/interfaces"
 	"sync"
 )
 
@@ -12,12 +11,12 @@ var c = New()
 type data struct {
 	once      *sync.Once
 	singleton bool
-	callback  interfaces.ContainerCallback // bind and singleton
-	instance  any                          // singleton and instance
+	callback  Callback // bind and singleton
+	instance  any      // singleton and instance
 }
 
 // GetSingleton get singleton
-func (sd *data) GetSingleton(c interfaces.ServiceContainer) any {
+func (sd *data) GetSingleton(c ServiceContainer) any {
 	sd.once.Do(func() {
 		sd.instance = sd.callback(c)
 	})
@@ -25,7 +24,7 @@ func (sd *data) GetSingleton(c interfaces.ServiceContainer) any {
 }
 
 // GetInstanceOrBind get instance or bind
-func (sd *data) GetInstanceOrBind(c interfaces.ServiceContainer) any {
+func (sd *data) GetInstanceOrBind(c ServiceContainer) any {
 	if sd.instance != nil {
 		return sd.instance
 	}
@@ -33,55 +32,55 @@ func (sd *data) GetInstanceOrBind(c interfaces.ServiceContainer) any {
 }
 
 // Make generate instance
-func (sd *data) Make(c interfaces.ServiceContainer) any {
+func (sd *data) Make(c ServiceContainer) any {
 	if sd.singleton {
 		return sd.GetSingleton(c)
 	}
 	return sd.GetInstanceOrBind(c)
 }
 
-// Container implementation interfaces.ServiceContainer
-type Container struct {
+// C implementation ServiceContainer
+type C struct {
 	m         *sync.Map
-	providers []interfaces.ServiceProvider
+	providers []ServiceProvider
 }
 
 // New Container instance
-func New() *Container {
-	return &Container{
+func New() *C {
+	return &C{
 		m:         &sync.Map{},
-		providers: make([]interfaces.ServiceProvider, 0),
+		providers: make([]ServiceProvider, 0),
 	}
 }
 
-func (c *Container) Get(id string) any {
+func (c *C) Get(id string) any {
 	return c.Make(id)
 }
 
-func (c *Container) Has(id string) bool {
+func (c *C) Has(id string) bool {
 	_, ok := c.m.Load(id)
 	return ok
 }
 
-func (c *Container) Bind(id string, callback interfaces.ContainerCallback) {
+func (c *C) Bind(id string, callback Callback) {
 	if !c.Has(id) {
 		c.m.Store(id, c.generateBindData(callback))
 	}
 }
 
-func (c *Container) Single(id string, callback interfaces.ContainerCallback) {
+func (c *C) Single(id string, callback Callback) {
 	if !c.Has(id) {
 		c.m.Store(id, c.generateSingletonData(callback))
 	}
 }
 
-func (c *Container) Instance(id string, instance any) {
+func (c *C) Instance(id string, instance any) {
 	if !c.Has(id) {
 		c.m.Store(id, c.generateInstanceData(instance))
 	}
 }
 
-func (c *Container) Make(id string) any {
+func (c *C) Make(id string) any {
 	if v, ok := c.m.Load(id); ok {
 		sd := v.(*data)
 		return sd.Make(c)
@@ -89,11 +88,11 @@ func (c *Container) Make(id string) any {
 	return nil
 }
 
-func (c *Container) AddServerProvider(sp interfaces.ServiceProvider) {
+func (c *C) AddServerProvider(sp ServiceProvider) {
 	c.providers = append(c.providers, sp)
 }
 
-func (c *Container) Boot() {
+func (c *C) Boot() {
 	if len(c.providers) > 0 {
 		for i, _ := range c.providers {
 			c.providers[i].Register(c)
@@ -105,15 +104,15 @@ func (c *Container) Boot() {
 	}
 }
 
-func (c *Container) generateBindData(callback interfaces.ContainerCallback) *data {
+func (c *C) generateBindData(callback Callback) *data {
 	return &data{callback: callback}
 }
 
-func (c *Container) generateSingletonData(callback interfaces.ContainerCallback) *data {
+func (c *C) generateSingletonData(callback Callback) *data {
 	return &data{once: &sync.Once{}, singleton: true, callback: callback}
 }
 
-func (c *Container) generateInstanceData(instance any) *data {
+func (c *C) generateInstanceData(instance any) *data {
 	return &data{instance: instance}
 }
 
@@ -125,15 +124,15 @@ func Has(id string) bool {
 	return c.Has(id)
 }
 
-func AddServerProvider(sp interfaces.ServiceProvider) {
+func AddServerProvider(sp ServiceProvider) {
 	c.AddServerProvider(sp)
 }
 
-func Bind(id string, callback interfaces.ContainerCallback) {
+func Bind(id string, callback Callback) {
 	c.Bind(id, callback)
 }
 
-func Single(id string, callback interfaces.ContainerCallback) {
+func Single(id string, callback Callback) {
 	c.Single(id, callback)
 }
 

@@ -1,6 +1,6 @@
-package interfaces
+package gioc
 
-type ContainerCallback func(sc ServiceContainer) any
+type Callback func(sc ServiceContainer) any
 
 type Container interface {
 	Get(id string) any
@@ -9,8 +9,8 @@ type Container interface {
 
 type ServiceContainer interface {
 	Container
-	Bind(id string, callback ContainerCallback)
-	Single(id string, callback ContainerCallback)
+	Bind(id string, callback Callback)
+	Single(id string, callback Callback)
 	Instance(id string, instance any)
 	Make(id string) any
 }
