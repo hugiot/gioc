@@ -30,8 +30,8 @@ All gioc examples have been moved as standalone repository to [here](https://git
 package main
 
 import (
-	"github.com/hugiot/gioc/examples/ioc/provider"
-	"github.com/hugiot/gioc/examples/ioc/service"
+	"github.com/hugiot/gioc-examples/ioc/provider"
+	"github.com/hugiot/gioc-examples/ioc/service"
 	"github.com/hugiot/gioc/src/container"
 	"go.uber.org/zap"
 )
