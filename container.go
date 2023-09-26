@@ -4,7 +4,7 @@ import (
 	"sync"
 )
 
-// c default Container instance
+// c default ServiceContainer instance
 var c = New()
 
 // data storage struct
@@ -16,83 +16,74 @@ type data struct {
 }
 
 // GetSingleton get singleton
-func (sd *data) GetSingleton(c ServiceContainer) any {
+func (sd *data) GetSingleton() any {
 	sd.once.Do(func() {
-		sd.instance = sd.callback(c)
+		sd.instance = sd.callback()
 	})
 	return sd.instance
 }
 
 // GetInstanceOrBind get instance or bind
-func (sd *data) GetInstanceOrBind(c ServiceContainer) any {
+func (sd *data) GetInstanceOrBind() any {
 	if sd.instance != nil {
 		return sd.instance
 	}
-	return sd.callback(c)
+	return sd.callback()
 }
 
 // Make generate instance
-func (sd *data) Make(c ServiceContainer) any {
+func (sd *data) Make() any {
 	if sd.singleton {
-		return sd.GetSingleton(c)
+		return sd.GetSingleton()
 	}
-	return sd.GetInstanceOrBind(c)
+	return sd.GetInstanceOrBind()
 }
 
-// C implementation ServiceContainer
-type C struct {
+// sc implementation ServiceContainer
+type sc struct {
 	m         *sync.Map
 	providers []ServiceProvider
 }
 
 // New Container instance
-func New() *C {
-	return &C{
+func New() ServiceContainer {
+	return &sc{
 		m:         &sync.Map{},
 		providers: make([]ServiceProvider, 0),
 	}
 }
 
-func (c *C) Get(id string) any {
-	return c.Make(id)
-}
-
-func (c *C) Has(id string) bool {
-	_, ok := c.m.Load(id)
-	return ok
-}
-
-func (c *C) Bind(id string, callback Callback) {
-	if !c.Has(id) {
-		c.m.Store(id, c.generateBindData(callback))
+func (c *sc) Bind(id string, callback Callback) {
+	if _, ok := c.m.Load(id); !ok {
+		c.m.Store(id, &data{callback: callback})
 	}
 }
 
-func (c *C) Single(id string, callback Callback) {
-	if !c.Has(id) {
-		c.m.Store(id, c.generateSingletonData(callback))
+func (c *sc) Single(id string, callback Callback) {
+	if _, ok := c.m.Load(id); !ok {
+		c.m.Store(id, &data{once: &sync.Once{}, singleton: true, callback: callback})
 	}
 }
 
-func (c *C) Instance(id string, instance any) {
-	if !c.Has(id) {
-		c.m.Store(id, c.generateInstanceData(instance))
+func (c *sc) Instance(id string, instance any) {
+	if _, ok := c.m.Load(id); !ok {
+		c.m.Store(id, &data{instance: instance})
 	}
 }
 
-func (c *C) Make(id string) any {
+func (c *sc) Make(id string) any {
 	if v, ok := c.m.Load(id); ok {
 		sd := v.(*data)
-		return sd.Make(c)
+		return sd.Make()
 	}
 	return nil
 }
 
-func (c *C) AddServerProvider(sp ServiceProvider) {
+func (c *sc) AddServerProvider(sp ServiceProvider) {
 	c.providers = append(c.providers, sp)
 }
 
-func (c *C) Boot() {
+func (c *sc) Boot() {
 	if len(c.providers) > 0 {
 		for i, _ := range c.providers {
 			c.providers[i].Register(c)
@@ -104,40 +95,8 @@ func (c *C) Boot() {
 	}
 }
 
-func (c *C) generateBindData(callback Callback) *data {
-	return &data{callback: callback}
-}
-
-func (c *C) generateSingletonData(callback Callback) *data {
-	return &data{once: &sync.Once{}, singleton: true, callback: callback}
-}
-
-func (c *C) generateInstanceData(instance any) *data {
-	return &data{instance: instance}
-}
-
-func Get(id string) any {
-	return c.Get(id)
-}
-
-func Has(id string) bool {
-	return c.Has(id)
-}
-
 func AddServerProvider(sp ServiceProvider) {
 	c.AddServerProvider(sp)
-}
-
-func Bind(id string, callback Callback) {
-	c.Bind(id, callback)
-}
-
-func Single(id string, callback Callback) {
-	c.Single(id, callback)
-}
-
-func Instance(id string, instance any) {
-	c.Instance(id, instance)
 }
 
 func Make(id string) any {

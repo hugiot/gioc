@@ -1,21 +1,33 @@
 package gioc
 
-type Callback func(sc ServiceContainer) any
+type Callback func() any
 
+// Container container
 type Container interface {
-	Get(id string) any
-	Has(id string) bool
-}
-
-type ServiceContainer interface {
-	Container
+	// Bind bind multiple instances
 	Bind(id string, callback Callback)
+	// Single bind singleton
 	Single(id string, callback Callback)
+	// Instance bind single instance
 	Instance(id string, instance any)
+	// Make build instance
 	Make(id string) any
 }
 
+// ServiceContainer service container
+type ServiceContainer interface {
+	// AddServerProvider add ServiceProvider
+	AddServerProvider(sp ServiceProvider)
+	// Boot service register and service boot
+	Boot()
+	// Make build instance
+	Make(id string) any
+}
+
+// ServiceProvider service provider
 type ServiceProvider interface {
-	Register(c ServiceContainer)
-	Boot(c ServiceContainer)
+	// Register service register
+	Register(c Container)
+	// Boot service boot
+	Boot(c Container)
 }
