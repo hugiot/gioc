@@ -14,16 +14,6 @@ type Container interface {
 	Make(id string) any
 }
 
-// ServiceContainer service container
-type ServiceContainer interface {
-	// AddServerProvider add ServiceProvider
-	AddServerProvider(sp ServiceProvider)
-	// Boot service register and service boot
-	Boot()
-	// Make build instance
-	Make(id string) any
-}
-
 // ServiceProvider service provider
 type ServiceProvider interface {
 	// Register service register

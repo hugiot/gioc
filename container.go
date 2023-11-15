@@ -5,7 +5,7 @@ import (
 )
 
 // c default ServiceContainer instance
-var c = New()
+var c = createContainer()
 
 // data storage struct
 type data struct {
@@ -15,16 +15,16 @@ type data struct {
 	instance  any      // singleton and instance
 }
 
-// GetSingleton get singleton
-func (sd *data) GetSingleton() any {
+// getSingleton get singleton
+func (sd *data) getSingleton() any {
 	sd.once.Do(func() {
 		sd.instance = sd.callback()
 	})
 	return sd.instance
 }
 
-// GetInstanceOrBind get instance or bind
-func (sd *data) GetInstanceOrBind() any {
+// getInstanceOrBind get instance or bind
+func (sd *data) getInstanceOrBind() any {
 	if sd.instance != nil {
 		return sd.instance
 	}
@@ -34,44 +34,47 @@ func (sd *data) GetInstanceOrBind() any {
 // Make generate instance
 func (sd *data) Make() any {
 	if sd.singleton {
-		return sd.GetSingleton()
+		return sd.getSingleton()
 	}
-	return sd.GetInstanceOrBind()
+	return sd.getInstanceOrBind()
 }
 
-// sc implementation ServiceContainer
-type sc struct {
+// container implementation ServiceContainer
+type container struct {
 	m         *sync.Map
 	providers []ServiceProvider
+	boot      bool
+	lock      *sync.Mutex
 }
 
-// New Container instance
-func New() ServiceContainer {
-	return &sc{
+// createContainer create Container instance
+func createContainer() *container {
+	return &container{
 		m:         &sync.Map{},
 		providers: make([]ServiceProvider, 0),
+		lock:      &sync.Mutex{},
 	}
 }
 
-func (c *sc) Bind(id string, callback Callback) {
+func (c *container) Bind(id string, callback Callback) {
 	if _, ok := c.m.Load(id); !ok {
 		c.m.Store(id, &data{callback: callback})
 	}
 }
 
-func (c *sc) Single(id string, callback Callback) {
+func (c *container) Single(id string, callback Callback) {
 	if _, ok := c.m.Load(id); !ok {
 		c.m.Store(id, &data{once: &sync.Once{}, singleton: true, callback: callback})
 	}
 }
 
-func (c *sc) Instance(id string, instance any) {
+func (c *container) Instance(id string, instance any) {
 	if _, ok := c.m.Load(id); !ok {
 		c.m.Store(id, &data{instance: instance})
 	}
 }
 
-func (c *sc) Make(id string) any {
+func (c *container) Make(id string) any {
 	if v, ok := c.m.Load(id); ok {
 		sd := v.(*data)
 		return sd.Make()
@@ -79,11 +82,11 @@ func (c *sc) Make(id string) any {
 	return nil
 }
 
-func (c *sc) AddServerProvider(sp ServiceProvider) {
+func (c *container) AddServiceProvider(sp ServiceProvider) {
 	c.providers = append(c.providers, sp)
 }
 
-func (c *sc) Boot() {
+func (c *container) Boot() {
 	if len(c.providers) > 0 {
 		for i, _ := range c.providers {
 			c.providers[i].Register(c)
@@ -92,11 +95,17 @@ func (c *sc) Boot() {
 		for i, _ := range c.providers {
 			c.providers[i].Boot(c)
 		}
+
+		// preload
+		c.m.Range(func(key, value any) bool {
+			_ = c.Make(key.(string))
+			return true
+		})
 	}
 }
 
-func AddServerProvider(sp ServiceProvider) {
-	c.AddServerProvider(sp)
+func AddServiceProvider(sp ServiceProvider) {
+	c.AddServiceProvider(sp)
 }
 
 func Make(id string) any {
@@ -104,5 +113,11 @@ func Make(id string) any {
 }
 
 func Boot() {
-	c.Boot()
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	if c.boot == false {
+		c.boot = true
+		c.Boot()
+	}
 }

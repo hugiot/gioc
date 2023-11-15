@@ -1,35 +1,54 @@
 package main
 
 import (
+	"fmt"
 	"github.com/hugiot/gioc"
-	"log"
-	"os"
 )
 
 const (
-	LogService string = "log"
+	AService string = "service-a"
+	BService string = "service-b"
 )
+
+type ServiceA struct {
+	Server *ServiceB
+}
+
+type ServiceB struct {
+	Server *ServiceA
+}
 
 type AppServiceProvider struct {
 }
 
 func (a AppServiceProvider) Register(c gioc.Container) {
-	c.Single(LogService, func() any {
-		return log.New(os.Stderr, "custom | ", log.LstdFlags)
+	c.Single(BService, func() any {
+		aService := c.Make(AService).(*ServiceA)
+		return &ServiceB{Server: aService}
 	})
+
+	c.Single(AService, func() any {
+		bService := c.Make(BService).(*ServiceB)
+		return &ServiceA{Server: bService}
+	})
+
 }
 
 func (a AppServiceProvider) Boot(c gioc.Container) {
+	fmt.Println("boot over")
 }
 
 func main() {
-	gioc.AddServerProvider(&AppServiceProvider{})
+	defer func() {
+		if err := recover(); err != nil {
+			panic(err)
+		}
+	}()
+	gioc.AddServiceProvider(&AppServiceProvider{})
 	gioc.Boot()
-	logger := gioc.Make(LogService).(*log.Logger)
-	logger.Println("this is content")
-	logger.SetPrefix("edit | ")
-	logger.Println("this is content")
 
-	logger2 := gioc.Make(LogService).(*log.Logger)
-	logger2.Println("this is content")
+	//aService := gioc.Make(AService).(*ServiceA)
+	//fmt.Println(aService)
+
+	fmt.Println("over")
 }
